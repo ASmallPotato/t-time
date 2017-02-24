@@ -24,16 +24,11 @@ fontHeights = len(fonts)
 
 
 
-# seconds_spent = 0;
+start_time = datetime.now()
 
-start_time = datetime.now() # - timedelta(hours=3)
+hours_needed = 0.25
 
-
-hours_needed = 0.001
-
-seconds_needed = hours_needed * 360
-
-target_time = start_time + timedelta(hours=hours_needed)
+target_time = start_time + timedelta(hours=hours_needed, seconds=0)
 
 
 
@@ -88,14 +83,30 @@ class MainLoop(Effect):
 
         new_text = '+' if over_time else ''
         # new_text += '{}:'.format(hours) if hours else ''
-        # new_text += '{:02d}:{:02d}'.format(minutes, seconds)
-        new_text += '{:02d}:{:02d}'.format(hours, minutes)
+        new_text += '{:02d}:{:02d}'.format(minutes, seconds)
+        # new_text += '{:02d}:{:02d}'.format(hours, minutes)
 
+        bg = self._bg
+        if over_time:
+            is_odd_frame = frame_no // 10 % 2
+            bg = Screen.COLOUR_RED if is_odd_frame else Screen.COLOUR_WHITE
+
+        if over_time:
+            for _y in range(self._screen.height):
+                self._screen.print_at(" " * self._screen.width,
+                                      0,
+                                      _y,
+                                      bg=bg)
+
+
+        colour = Screen.COLOUR_GREEN
+        if over_time:
+            colour = Screen.COLOUR_RED if not is_odd_frame else Screen.COLOUR_WHITE
         for i, line in enumerate(getTextLines(new_text)):
             self._screen.print_at(line,
                                   textWidth(-len(line)),
                                   y + i,
-                                  colour=Screen.COLOUR_GREEN,
+                                  colour=colour,
                                   bg=self._bg,
                                   # bg=Screen.COLOUR_WHITE,
                                   transparent=True)
