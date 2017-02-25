@@ -1,10 +1,5 @@
-from random import choice
-from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.effects import Effect
-from asciimatics.exceptions import ResizeScreenError
-import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from configparser import ConfigParser
 
@@ -24,128 +19,63 @@ fontHeights = len(fonts)
 
 
 
-start_time = datetime.now()
+def get_text_lines(text):
+    return ('  '.join(line[c] for c in text) for line in fonts)
 
-hours_needed = 0.25
+def timer(screen, frame_no, storage):
 
-target_time = start_time + timedelta(hours=hours_needed, seconds=0)
+    def textWidth(offset):
+        return (screen.width + offset) // 2 + 1
 
+    now = datetime.now()
+    over_time = False
 
-
-
-
-class MainLoop(Effect):
-    def __init__(self, screen, bg=Screen.COLOUR_BLACK, **kwargs):
-        """
-        :param screen: The Screen being used for the Scene.
-        """
-        super(MainLoop, self).__init__(**kwargs)
-        self._screen = screen
-        self._bg = bg
-        self._old_text = None
-
-    def reset(self):
-        pass
-
-    def _update(self, frame_no):
-        def getTextLines(text):
-            return ('  '.join(line[c] for c in text) for line in fonts)
-
-        def textWidth(offset):
-            return (self._screen.width + offset) // 2 + 1
-
-        y = (self._screen.height // 2) - 4
+    _micro_sec_diff = (storage.timer['target_time'] - now).total_seconds()
+    sec_diff = round(_micro_sec_diff)
 
 
-        now = datetime.now()
-        over_time = False
+    if sec_diff < 0:
+        over_time = True
+        sec_diff = abs(sec_diff)
 
-        sec_diff = round((target_time - now).total_seconds())
-
-
-        if sec_diff < 0:
-            over_time = True
-            sec_diff = abs(sec_diff)
-
-        min_diff, seconds = divmod(sec_diff, 60)
-        hours, minutes = divmod(min_diff, 60)
+    min_diff, seconds = divmod(sec_diff, 60)
+    hours, minutes = divmod(min_diff, 60)
 
 
+    new_text = '+' if over_time else ''
+    # new_text += '{}:'.format(hours) if hours else ''
+    new_text += '{:02d}:{:02d}'.format(minutes, seconds)
+    # new_text += '{:02d}:{:02d}'.format(hours, minutes)
+
+    bg = Screen.COLOUR_BLACK
+    if over_time:
+        is_odd_frame = _micro_sec_diff % 1 <= 0.5
+        bg = Screen.COLOUR_RED if is_odd_frame else Screen.COLOUR_WHITE
+
+    y = (screen.height // 2) - 4
+    colour = Screen.COLOUR_GREEN
+
+    if over_time:
+        colour = Screen.COLOUR_RED if not is_odd_frame else Screen.COLOUR_WHITE
+        for _y in range(screen.height):
+            screen.print_at(" " * screen.width, 0, _y, bg=bg)
+    else:
         # Clear old text
-        if self._old_text is not None:
-            for i, line in enumerate(getTextLines(self._old_text)):
+        if storage.timer['old_text'] is not None:
+            for i, line in enumerate(get_text_lines(storage.timer['old_text'])):
                 lineWidth = len(line)
                 startX = textWidth(-lineWidth)
                 endX = textWidth(+lineWidth)
-                self._screen.move(startX, y + i)
-                self._screen.draw(endX, y + i, char=" ")
+                screen.move(startX, y + i)
+                screen.draw(endX, y + i, char=" ")
 
+    for i, line in enumerate(get_text_lines(new_text)):
+        screen.print_at(line,
+                              textWidth(-len(line)),
+                              y + i,
+                              colour=colour,
+                              bg=bg,
+                              transparent=True)
+    storage.timer['old_text'] = new_text
 
-        new_text = '+' if over_time else ''
-        # new_text += '{}:'.format(hours) if hours else ''
-        new_text += '{:02d}:{:02d}'.format(minutes, seconds)
-        # new_text += '{:02d}:{:02d}'.format(hours, minutes)
-
-        bg = self._bg
-        if over_time:
-            is_odd_frame = frame_no // 10 % 2
-            bg = Screen.COLOUR_RED if is_odd_frame else Screen.COLOUR_WHITE
-
-        if over_time:
-            for _y in range(self._screen.height):
-                self._screen.print_at(" " * self._screen.width,
-                                      0,
-                                      _y,
-                                      bg=bg)
-
-
-        colour = Screen.COLOUR_GREEN
-        if over_time:
-            colour = Screen.COLOUR_RED if not is_odd_frame else Screen.COLOUR_WHITE
-        for i, line in enumerate(getTextLines(new_text)):
-            self._screen.print_at(line,
-                                  textWidth(-len(line)),
-                                  y + i,
-                                  colour=colour,
-                                  bg=self._bg,
-                                  # bg=Screen.COLOUR_WHITE,
-                                  transparent=True)
-        self._old_text = new_text
-
-    @property
-    def stop_frame(self):
-        return self._stop_frame
-
-    @property
-    def frame_update_count(self):
-        # Only need to update once a second
-        # return 20
-        return 10
-
-
-
-
-
-
-
-
-
-
-
-
-
-def demo(screen):
-
-    scenes = []
-    effects = [
-        MainLoop(screen)
-    ]
-    scenes.append(Scene(effects, -1))
-    screen.play(scenes, stop_on_resize=True)
-
-while True:
-    try:
-        Screen.wrapper(demo)
-        sys.exit(0)
-    except ResizeScreenError:
-        pass
+    return 1
