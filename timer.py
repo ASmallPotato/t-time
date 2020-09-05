@@ -30,6 +30,10 @@ def timer(screen, frame_no, timer_config, ev):
     if ev == ord('q'):
         return 0
 
+    if screen.has_resized():
+        wipe_screen(screen, Screen.COLOUR_BLACK)
+        return None
+
     if ev == ord('r') and timer_config.get('r_to_restart', False):
         timer_config['_target_time'] = None
         wipe_screen(screen, Screen.COLOUR_BLACK)
