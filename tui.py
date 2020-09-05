@@ -6,21 +6,26 @@ import time
 
 class TUI(object):
 
-    def __init__(self, storage, update_function):
+    def __init__(self, config, update_function):
         self.frame = 0
         self.update_function = update_function
 
-        self._storage = storage
+        self._state = config
 
     def _main_loop(self, screen):
         while True:
-            ev = screen.get_key()
-            sig = self.update_function(screen, self.frame, self._storage, ev)
-            if not sig:
-                return
+            key_press = screen.get_key()
+            signal = self.update_function(
+                screen,
+                self.frame,
+                self._state,
+                key_press
+            )
+            if signal != None:
+                return signal
             screen.refresh()
             self.frame += 1
-            if not ev:
+            if not key_press:
                 time.sleep(0.25)
 
     def start(self):

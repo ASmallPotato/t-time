@@ -88,7 +88,7 @@ def timer(screen, frame_no, timer_config, ev):
             transparent=True
         )
 
-    return 1
+    return None
 
 
 if __name__ == '__main__':
