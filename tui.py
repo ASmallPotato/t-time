@@ -15,7 +15,7 @@ class TUI(object):
     def _main_loop(self, screen):
         while True:
             ev = screen.get_key()
-            sig = self.update_function(screen, self.frame, self._storage)
+            sig = self.update_function(screen, self.frame, self._storage, ev)
             if not sig:
                 return
             screen.refresh()
