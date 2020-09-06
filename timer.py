@@ -41,7 +41,7 @@ def timer(screen, frame_no, timer_config, ev):
         timer_config['_target_time'] = None
         wipe_screen(screen, Screen.COLOUR_BLACK)
 
-    if '_target_time' not in timer_config:
+    if not timer_config.get('_target_time'):
         start_time = datetime.now()
         timer_config['_target_time'] = start_time + timedelta(**timer_config['duration'])
 
