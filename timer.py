@@ -4,14 +4,17 @@ from datetime import datetime, timedelta
 from configparser import ConfigParser
 
 config = ConfigParser(delimiters=('='))
-config.read('fonts.ini')
+config.read('config.ini')
 
-config_digits_section = config._sections['digits']
+fonts = ConfigParser(delimiters=('='))
+fonts.read('fonts.ini')
+
+font_digits_section = fonts._sections['digits']
 
 font = {
     char: lines_block.replace('_', ' ').split('\n')[1:]
     for char, lines_block
-    in config_digits_section.items()
+    in font_digits_section.items()
 }
 line_height = max(len(height) for height in font.values())
 
@@ -97,7 +100,11 @@ if __name__ == '__main__':
     target_time = datetime.now() + timedelta()
 
     timer_args = {
-        "duration": { "hours": 0, "minutes": 15, "seconds": 0 },
+        "duration": {
+            key: int(value)
+            for key, value
+            in config._sections['duration'].items()
+        },
         "r_to_restart": True,
     }
 
